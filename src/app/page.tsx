@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import { getCatalog } from "@/lib/api";
+"use client";
+
+import { PageError, PageLoading } from "@/components/data-state";
+import { useCatalog } from "@/lib/use-content";
 import DashboardView from "./dashboard-view";
 
-export const dynamic = "force-dynamic";
+export default function DashboardPage() {
+  const catalog = useCatalog();
 
-export const metadata: Metadata = {
-  title: "Trang chủ",
-};
+  if (catalog.loading) return <PageLoading label="Đang tải bài học…" />;
+  if (catalog.error) return <PageError message={catalog.error} />;
+  if (!catalog.data) return null;
 
-export default async function DashboardPage() {
-  const catalog = await getCatalog();
-
-  return <DashboardView lessons={catalog.lessons} />;
+  return <DashboardView lessons={catalog.data.lessons} />;
 }

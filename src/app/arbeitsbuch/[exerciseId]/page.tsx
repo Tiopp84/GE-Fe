@@ -1,27 +1,21 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { ApiError, getExercise } from "@/lib/api";
+"use client";
+
+import { useParams } from "next/navigation";
+import { PageError, PageLoading } from "@/components/data-state";
+import { useExercise } from "@/lib/use-content";
 import { ExerciseRunner } from "./exercise-runner";
 
-export const dynamic = "force-dynamic";
+export default function ExercisePage() {
+  const params = useParams<{ exerciseId: string }>();
+  const exerciseId =
+    typeof params.exerciseId === "string"
+      ? params.exerciseId
+      : (params.exerciseId?.[0] ?? "");
+  const exercise = useExercise(exerciseId);
 
-export const metadata: Metadata = {
-  title: "Làm bài tập",
-};
+  if (exercise.loading) return <PageLoading label="Đang tải bài tập…" />;
+  if (exercise.error) return <PageError message={exercise.error} />;
+  if (!exercise.data) return <PageError message="Không tìm thấy bài tập." />;
 
-export default async function ExercisePage({
-  params,
-}: {
-  params: Promise<{ exerciseId: string }>;
-}) {
-  const { exerciseId } = await params;
-
-  const data = await getExercise(exerciseId).catch((error: unknown) => {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
-  });
-
-  return <ExerciseRunner {...data} />;
+  return <ExerciseRunner {...exercise.data} />;
 }

@@ -12,15 +12,18 @@ import {
   GraduationCap,
   Home,
   Lightbulb,
+  LogIn,
+  LogOut,
   Menu,
   NotebookPen,
   Search,
-  Settings2,
+  ShieldCheck,
   Sparkles,
   Volume2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 import { useProgress } from "@/lib/progress";
 import { useSettings } from "@/lib/settings";
 import { Button, Modal, RateControl } from "@/components/ui";
@@ -104,6 +107,9 @@ const breadcrumbLabels: Record<string, string> = {
   speaking: "Luyện nói",
 };
 
+/** Các trang auth công khai, không dùng layout có sidebar. */
+const publicAuthPaths = new Set(["/login", "/register"]);
+
 function NavLink({
   href,
   label,
@@ -134,7 +140,13 @@ function NavLink({
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { speechRate } = useSettings();
+  const { status, user, isAdmin, logout } = useAuth();
+  const signOut = async () => {
+    await logout();
+    router.push("/");
+  };
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -224,6 +236,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               </div>
             </div>
           ))}
+          {isAdmin ? (
+            <div>
+              <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-[#8795ab]">
+                QUẢN TRỊ
+              </p>
+              <NavLink
+                href="/admin"
+                label="Admin dashboard"
+                active={pathname.startsWith("/admin")}
+                onClick={onNavigate}
+              >
+                <ShieldCheck className="h-[17px] w-[17px]" />
+              </NavLink>
+            </div>
+          ) : null}
         </nav>
 
         <div className="mt-6 rounded-xl border border-line bg-[#fafbff] p-3">
@@ -246,16 +273,38 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="border-t border-line px-4 py-3">
-        <div className="flex items-center gap-2.5 rounded-xl px-2 py-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#e9eefb] text-[11px] font-bold text-navy">
-            MA
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-bold text-navy">Minh Anh</p>
-            <p className="text-[10px] text-muted">A1 Learner · Lưu cục bộ</p>
+        {status === "authenticated" && user ? (
+          <div className="flex items-center gap-2.5 rounded-xl px-2 py-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#e9eefb] text-[11px] font-bold text-navy">
+              {(user.email ?? "U").slice(0, 2).toUpperCase()}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-bold text-navy">{user.email}</p>
+              <p className="text-[10px] text-muted">
+                {isAdmin ? "Admin" : "User"} · Supabase Auth
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={signOut}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-[#f3f6fc] hover:text-danger"
+              aria-label="Đăng xuất"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
-          <Settings2 className="h-4 w-4 text-[#8795ab]" aria-hidden="true" />
-        </div>
+        ) : status === "loading" ? (
+          <p className="px-2 py-3 text-[11px] text-muted">Đang tải tài khoản…</p>
+        ) : (
+          <Link
+            href="/login"
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-xl bg-soft px-3 py-2.5 text-[12px] font-semibold text-[#2457b8] hover:bg-[#e4edff]"
+          >
+            <LogIn className="h-4 w-4" aria-hidden="true" />
+            Đăng nhập
+          </Link>
+        )}
       </div>
     </>
   );
@@ -302,11 +351,17 @@ function Breadcrumbs() {
 
 function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const router = useRouter();
+  const { status, user, isAdmin, logout } = useAuth();
   const [query, setQuery] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const notifRef = useRef<HTMLDivElement | null>(null);
+
+  const signOut = async () => {
+    await logout();
+    router.push("/");
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -434,15 +489,35 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
           <span className="mx-1 hidden h-6 w-px bg-line sm:block" />
 
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e9eefb] text-[10px] font-bold text-navy">
-              MA
-            </span>
-            <div className="hidden leading-tight xl:block">
-              <p className="text-[11px] font-bold text-navy">Minh Anh</p>
-              <p className="text-[9px] text-muted">A1 Learner</p>
+          {status === "authenticated" && user ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e9eefb] text-[10px] font-bold text-navy">
+                {(user.email ?? "U").slice(0, 2).toUpperCase()}
+              </span>
+              <div className="hidden leading-tight xl:block">
+                <p className="max-w-[160px] truncate text-[11px] font-bold text-navy">{user.email}</p>
+                <p className="text-[9px] text-muted">{isAdmin ? "Admin" : "User"}</p>
+              </div>
+              <button
+                type="button"
+                onClick={signOut}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-white hover:text-danger"
+                aria-label="Đăng xuất"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
-          </div>
+          ) : status === "loading" ? (
+            <span className="text-[10px] text-muted">Đang tải…</span>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[11px] font-semibold text-navy hover:bg-white"
+            >
+              <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
+              Đăng nhập
+            </Link>
+          )}
         </div>
       </div>
 
@@ -497,11 +572,20 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { status } = useAuth();
   const { storageError, clearStorageError } = useProgress();
+  const isAuthPage = publicAuthPaths.has(pathname);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isAuthPage && status === "anonymous") {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [isAuthPage, pathname, router, status]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -511,6 +595,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
+
+  if (isAuthPage) {
+    return <div className="min-h-dvh">{children}</div>;
+  }
+
+  if (status !== "authenticated") {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-6 text-center text-sm text-muted">
+        {status === "loading" ? "Đang kiểm tra đăng nhập…" : "Đang chuyển đến trang đăng nhập…"}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh">

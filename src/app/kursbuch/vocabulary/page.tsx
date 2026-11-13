@@ -1,21 +1,20 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Suspense } from "react";
-import { getDefaultLessonId, getLessonBundle } from "@/lib/api";
+import { PageError, PageLoading } from "@/components/data-state";
+import { useDefaultLessonBundle } from "@/lib/use-content";
 import { VocabularyView } from "./vocabulary-view";
 
-export const dynamic = "force-dynamic";
+export default function VocabularyPage() {
+  const bundle = useDefaultLessonBundle();
 
-export const metadata: Metadata = {
-  title: "Từ vựng Kursbuch",
-};
-
-export default async function VocabularyPage() {
-  const lessonId = await getDefaultLessonId();
-  const bundle = await getLessonBundle(lessonId);
+  if (bundle.loading) return <PageLoading label="Đang tải từ vựng…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Chưa có dữ liệu từ vựng." />;
 
   return (
-    <Suspense fallback={<div className="py-16 text-center text-sm text-muted">Đang tải từ vựng…</div>}>
-      <VocabularyView bundle={bundle} />
+    <Suspense fallback={<PageLoading label="Đang tải từ vựng…" />}>
+      <VocabularyView bundle={bundle.data} />
     </Suspense>
   );
 }

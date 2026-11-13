@@ -1,27 +1,21 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { ApiError, getLessonBundle } from "@/lib/api";
+"use client";
+
+import { useParams } from "next/navigation";
+import { PageError, PageLoading } from "@/components/data-state";
+import { useLessonBundle } from "@/lib/use-content";
 import { LessonOverview } from "./lesson-overview";
 
-export const dynamic = "force-dynamic";
+export default function LessonPage() {
+  const params = useParams<{ lessonId: string }>();
+  const lessonId =
+    typeof params.lessonId === "string"
+      ? params.lessonId
+      : (params.lessonId?.[0] ?? "");
+  const bundle = useLessonBundle(lessonId);
 
-export const metadata: Metadata = {
-  title: "Tổng quan bài học",
-};
+  if (bundle.loading) return <PageLoading label="Đang tải bài học…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Không tìm thấy bài học." />;
 
-export default async function LessonPage({
-  params,
-}: {
-  params: Promise<{ lessonId: string }>;
-}) {
-  const { lessonId } = await params;
-
-  const bundle = await getLessonBundle(lessonId).catch((error: unknown) => {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
-  });
-
-  return <LessonOverview bundle={bundle} />;
+  return <LessonOverview bundle={bundle.data} />;
 }

@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-import { getDefaultLessonId, getLessonBundle } from "@/lib/api";
+"use client";
+
+import { PageError, PageLoading } from "@/components/data-state";
+import { useDefaultLessonBundle } from "@/lib/use-content";
 import { SpeakingView } from "./speaking-view";
 
-export const dynamic = "force-dynamic";
+export default function SpeakingPage() {
+  const bundle = useDefaultLessonBundle();
 
-export const metadata: Metadata = {
-  title: "Luyện nói",
-};
+  if (bundle.loading) return <PageLoading label="Đang tải bài nói…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Chưa có dữ liệu luyện nói." />;
 
-export default async function SpeakingPage() {
-  const lessonId = await getDefaultLessonId();
-  const bundle = await getLessonBundle(lessonId);
-
-  return <SpeakingView bundle={bundle} />;
+  return <SpeakingView bundle={bundle.data} />;
 }

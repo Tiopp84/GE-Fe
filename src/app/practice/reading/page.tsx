@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-import { getDefaultLessonId, getLessonBundle } from "@/lib/api";
+"use client";
+
+import { PageError, PageLoading } from "@/components/data-state";
+import { useDefaultLessonBundle } from "@/lib/use-content";
 import { ReadingView } from "./reading-view";
 
-export const dynamic = "force-dynamic";
+export default function ReadingPage() {
+  const bundle = useDefaultLessonBundle();
 
-export const metadata: Metadata = {
-  title: "Luyện đọc",
-};
+  if (bundle.loading) return <PageLoading label="Đang tải bài đọc…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Chưa có dữ liệu bài đọc." />;
 
-export default async function ReadingPage() {
-  const lessonId = await getDefaultLessonId();
-  const bundle = await getLessonBundle(lessonId);
-
-  return <ReadingView bundle={bundle} />;
+  return <ReadingView bundle={bundle.data} />;
 }

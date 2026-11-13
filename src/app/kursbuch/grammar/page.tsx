@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-import { getDefaultLessonId, getLessonBundle } from "@/lib/api";
+"use client";
+
+import { PageError, PageLoading } from "@/components/data-state";
+import { useDefaultLessonBundle } from "@/lib/use-content";
 import { GrammarView } from "./grammar-view";
 
-export const dynamic = "force-dynamic";
+export default function GrammarPage() {
+  const bundle = useDefaultLessonBundle();
 
-export const metadata: Metadata = {
-  title: "Ngữ pháp Kursbuch",
-};
+  if (bundle.loading) return <PageLoading label="Đang tải ngữ pháp…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Chưa có dữ liệu ngữ pháp." />;
 
-export default async function GrammarPage() {
-  const lessonId = await getDefaultLessonId();
-  const bundle = await getLessonBundle(lessonId);
-
-  return <GrammarView bundle={bundle} />;
+  return <GrammarView bundle={bundle.data} />;
 }

@@ -1,21 +1,20 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Suspense } from "react";
-import { getDefaultLessonId, getLessonBundle } from "@/lib/api";
+import { PageError, PageLoading } from "@/components/data-state";
+import { useDefaultLessonBundle } from "@/lib/use-content";
 import { ArbeitsbuchView } from "./arbeitsbuch-view";
 
-export const dynamic = "force-dynamic";
+export default function ArbeitsbuchPage() {
+  const bundle = useDefaultLessonBundle();
 
-export const metadata: Metadata = {
-  title: "Thư viện bài tập Arbeitsbuch",
-};
-
-export default async function ArbeitsbuchPage() {
-  const lessonId = await getDefaultLessonId();
-  const bundle = await getLessonBundle(lessonId);
+  if (bundle.loading) return <PageLoading label="Đang tải bài tập…" />;
+  if (bundle.error) return <PageError message={bundle.error} />;
+  if (!bundle.data) return <PageError message="Chưa có dữ liệu bài tập." />;
 
   return (
-    <Suspense fallback={<div className="py-16 text-center text-sm text-muted">Đang tải bài tập…</div>}>
-      <ArbeitsbuchView bundle={bundle} />
+    <Suspense fallback={<PageLoading label="Đang tải bài tập…" />}>
+      <ArbeitsbuchView bundle={bundle.data} />
     </Suspense>
   );
 }

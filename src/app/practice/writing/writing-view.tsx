@@ -21,7 +21,8 @@ import {
   Wand2,
 } from "lucide-react";
 import type { LessonBundle, WritingReviewResponse } from "@/lib/api-types";
-import { ApiError, apiFetch, lessonHref } from "@/lib/api";
+import { ApiError, lessonHref } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useProgress } from "@/lib/progress";
 import type { WritingReview } from "@/lib/writing-types";
 import { cn, formatRelativeTime, wordCount } from "@/lib/utils";
@@ -62,6 +63,7 @@ export function WritingView({ bundle, aiConfigured, aiModel, aiLabel }: WritingV
   const reviewRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const submittingRef = useRef(false);
+  const { authFetch } = useAuth();
   const { data, hydrated, saveWritingDraft, saveWritingReview } = useProgress();
   const { notify } = useToast();
 
@@ -116,7 +118,7 @@ export function WritingView({ bundle, aiConfigured, aiModel, aiLabel }: WritingV
     const timeout = setTimeout(() => controller.abort(), 35_000);
 
     try {
-      const payload = await apiFetch<WritingReviewResponse>("/v1/writing/review", {
+      const payload = await authFetch<WritingReviewResponse>("/v1/writing/review", {
         method: "POST",
         body: JSON.stringify({ promptId: currentPrompt.id, text: currentText }),
         signal: controller.signal,

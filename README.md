@@ -17,6 +17,18 @@ npm run dev
 
 Mặc định chạy ở `http://localhost:3000`.
 
+## Auth
+
+- `/login`: đăng nhập bằng tài khoản Supabase Auth.
+- `/register`: tự đăng ký tài khoản user thường bằng email + mật khẩu.
+- Sau khi đăng ký, nếu Supabase bật “Confirm email”, người dùng được hướng dẫn
+  kiểm tra email; nếu tắt, ứng dụng đăng nhập ngay.
+- Session được giữ trong `localStorage` và gửi tới backend qua
+  `Authorization: Bearer <access-token>`.
+
+Cấu hình backend tương ứng ở `be/README.md` và biến `NEXT_PUBLIC_API_URL` trong
+`.env.local`.
+
 ## Kiểm tra
 
 ```bash

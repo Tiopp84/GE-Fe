@@ -59,6 +59,35 @@ export interface ExercisePageData {
   vocabulary: VocabularyItem[];
 }
 
+export type AuthRole = "admin" | "user";
+
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  emailConfirmedAt: string | null;
+  createdAt: string;
+  role: AuthRole;
+}
+
+export interface AuthSession {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  expiresAt: string | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  session: AuthSession;
+}
+
+export interface RegisterResponse {
+  user: AuthUser;
+  session: AuthSession | null;
+  requiresEmailConfirmation: boolean;
+}
+
 export interface WritingReviewResponse {
   review: WritingReview;
   provider: "local" | "ai";
